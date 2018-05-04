@@ -32,7 +32,7 @@ class PyGoban(tk.Tk):
         self.geometry("800x580+100+100")
         self.title("PyGoban")
         self.goban = [[0 for i in range(19)] for i in range(19)]
-        self.offset = 40
+        self.offset = 40  # goban offset from top-left canvas corner
         self.stone_size = 20
         self.game_turn = 0
         self.colors = ["white", "black"]
@@ -187,7 +187,7 @@ class PyGoban(tk.Tk):
     # EVENTS ------------------------------------------------------------------
 
     def mouseMove(self, evt):
-        """ display preview stone above the goban """
+        """ display preview stone on the goban """
         self.can.delete("preview")
         goban_x = (evt.x - self.offset) // self.stone_size
         goban_y = (evt.y - self.offset) // self.stone_size
