@@ -1,24 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# ==============================================================================
-# This is PyGo v0.3
-
-# Go interface for :
-# - free play (empty board)
-# - play against computer (gnugo)
-# - analysis (graphical tools)
-# - .sgf file reader
-# - library of tsumegos and joseki problems
-# - interface for brave Python IA developers
-
-# 2018 - peyop78@gmail.com
-# =============================================================================
-
 import tkinter as tk
 
-
-# =============================================================================
 
 class Stone:
 
@@ -33,27 +17,23 @@ class Stone:
         return self.color[0]
 
 
-# =============================================================================
-
 class StoneGroup:
 
     def __init__(self, stones):
         self.stones = stones
 
 
-# =============================================================================
-
-class GoApp(tk.Tk):
+class PyGoban(tk.Tk):
 
     def __init__(self, parent):
         tk.Tk.__init__(self, parent)
         self.parent = parent
         self.resizable(width=False, height=False)
         self.geometry("800x580+100+100")
-        self.title("PyGo")
+        self.title("PyGoban")
         self.goban = [[0 for i in range(19)] for i in range(19)]
         self.offset = 40
-        self.ssize = 20
+        self.stone_size = 20
         self.game_turn = 0
         self.colors = ["white", "black"]
         self.initWidgets()
@@ -66,6 +46,7 @@ class GoApp(tk.Tk):
 
     def initWidgets(self):
         self.can = tk.Canvas(self, width=480, height=480, bg="#dcb35c")
+        self.can.configure(cursor="none")
         self.can.grid(row=0, column=0)
 
         self.goban_coords = tk.StringVar()
@@ -88,18 +69,18 @@ class GoApp(tk.Tk):
         for x in range(18):
             for y in range(18):
                 self.can.create_rectangle(
-                    self.offset + x * self.ssize,
-                    self.offset + y * self.ssize,
-                    self.offset + x * self.ssize + self.ssize,
-                    self.offset + y * self.ssize + self.ssize
+                    self.offset + x * self.stone_size,
+                    self.offset + y * self.stone_size,
+                    self.offset + x * self.stone_size + self.stone_size,
+                    self.offset + y * self.stone_size + self.stone_size
                 )
 
     def drawStone(self, stone):
         self.can.create_oval(
-            self.offset + stone.x * self.ssize - self.ssize / 2,
-            self.offset + stone.y * self.ssize - self.ssize / 2,
-            self.offset + stone.x * self.ssize - self.ssize / 2 + self.ssize,
-            self.offset + stone.y * self.ssize - self.ssize / 2 + self.ssize,
+            self.offset + stone.x * self.stone_size - self.stone_size / 2,
+            self.offset + stone.y * self.stone_size - self.stone_size / 2,
+            self.offset + stone.x * self.stone_size - self.stone_size / 2 + self.stone_size,
+            self.offset + stone.y * self.stone_size - self.stone_size / 2 + self.stone_size,
             fill=stone.color
         )
 
@@ -115,36 +96,37 @@ class GoApp(tk.Tk):
         for i in range(1, 20):
             self.can.create_text(
               self.offset/2,
-              self.offset/2 + i * self.ssize,
+              self.offset/2 + i * self.stone_size,
               text=numbers[i-1]
             )
             self.can.create_text(
-              self.offset + self.ssize * 19,
-              self.offset/2 + i * self.ssize,
+              self.offset + self.stone_size * 19,
+              self.offset/2 + i * self.stone_size,
               text=numbers[i-1]
             )
             self.can.create_text(
-              self.offset/2 + i * self.ssize,
+              self.offset/2 + i * self.stone_size,
               self.offset/2,
               text=letters[i-1]
             )
             self.can.create_text(
-                self.offset/2 + i * self.ssize,
-                self.offset + self.ssize * 19,
+                self.offset/2 + i * self.stone_size,
+                self.offset + self.stone_size * 19,
                 text=letters[i-1]
             )
 
     def drawPoint(self, x, y):
         self.can.create_oval(
-            self.offset + x * self.ssize - 2,
-            self.offset + y * self.ssize - 2,
-            self.offset + x * self.ssize + 2,
-            self.offset + y * self.ssize + 2,
+            self.offset + x * self.stone_size - 2,
+            self.offset + y * self.stone_size - 2,
+            self.offset + x * self.stone_size + 2,
+            self.offset + y * self.stone_size + 2,
             fill="black"
         )
 
     def drawPoints(self):
         """ display tengen and hoshi points on the goban """
+        # TODO : refact
         self.drawPoint(3, 3)
         self.drawPoint(9, 3)
         self.drawPoint(15, 3)
@@ -159,10 +141,10 @@ class GoApp(tk.Tk):
         """ red square on last played stone """
         self.can.delete("last")
         self.can.create_rectangle(
-            self.offset + x * self.ssize - 4,
-            self.offset + y * self.ssize - 4,
-            self.offset + x * self.ssize + 4,
-            self.offset + y * self.ssize + 4,
+            self.offset + x * self.stone_size - 4,
+            self.offset + y * self.stone_size - 4,
+            self.offset + x * self.stone_size + 4,
+            self.offset + y * self.stone_size + 4,
             outline="red", fill="red", tag="last"
         )
 
@@ -178,7 +160,7 @@ class GoApp(tk.Tk):
 
     def humanCoords(self, x, y):
         """ goban[x][y] -> 'q13' """
-        return "abcdefghjklmnopqrst"[x] + str(y + 1)
+        return "abcdefghjklmnopqrst"[x] + str(19 - y)
 
     # GAME LOGIC --------------------------------------------------------------
 
@@ -207,24 +189,23 @@ class GoApp(tk.Tk):
     def mouseMove(self, evt):
         """ display preview stone above the goban """
         self.can.delete("preview")
-        goban_x = (evt.x - self.offset) // self.ssize
-        goban_y = (evt.y - self.offset) // self.ssize
+        goban_x = (evt.x - self.offset) // self.stone_size
+        goban_y = (evt.y - self.offset) // self.stone_size
         color = self.colors[self.game_turn % 2]
         if goban_x in range(19) and goban_y in range(19):
-            # update coords strvar
             self.goban_coords.set(self.humanCoords(goban_x, goban_y))
             if self.goban[goban_x][goban_y] == 0:
                 self.can.create_rectangle(
-                    self.offset + goban_x * self.ssize - 5,
-                    self.offset + goban_y * self.ssize - 5,
-                    self.offset + goban_x * self.ssize + 5,
-                    self.offset + goban_y * self.ssize + 5,
+                    self.offset + goban_x * self.stone_size - 5,
+                    self.offset + goban_y * self.stone_size - 5,
+                    self.offset + goban_x * self.stone_size + 5,
+                    self.offset + goban_y * self.stone_size + 5,
                     fill=color, tag="preview"
                 )
 
     def mouseClick(self, evt):
-        goban_x = (evt.x - self.offset) // self.ssize
-        goban_y = (evt.y - self.offset) // self.ssize
+        goban_x = (evt.x - self.offset) // self.stone_size
+        goban_y = (evt.y - self.offset) // self.stone_size
         self.can.update()
         color = self.colors[self.game_turn % 2]
         if goban_x in range(19) and goban_y in range(19):
@@ -236,7 +217,6 @@ class GoApp(tk.Tk):
         # self.consoleDisplay()
 
 
-# =============================================================================
 if __name__ == '__main__':
-    app = GoApp(None)
+    app = PyGoban(None)
     app.mainloop()

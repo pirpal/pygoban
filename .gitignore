@@ -1,1 +1,3 @@
 tests.py
+*.png
+.rope_project/
