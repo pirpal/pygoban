@@ -127,15 +127,19 @@ class PyGoban(tk.Tk):
     def drawPoints(self):
         """ display tengen and hoshi points on the goban """
         # TODO : refact
-        self.drawPoint(3, 3)
-        self.drawPoint(9, 3)
-        self.drawPoint(15, 3)
-        self.drawPoint(3, 9)
-        self.drawPoint(9, 9)
-        self.drawPoint(15, 9)
-        self.drawPoint(3, 15)
-        self.drawPoint(9, 15)
-        self.drawPoint(15, 15)
+        for x in [(3, 3), (9, 3), (15, 3),
+                  (3, 9), (9, 9), (15, 9),
+                  (3, 15), (9, 15), (15, 15)]:
+            self.drawPoint(x[0], x[1])
+        # self.drawPoint(3, 3)
+        # self.drawPoint(9, 3)
+        # self.drawPoint(15, 3)
+        # self.drawPoint(3, 9)
+        # self.drawPoint(9, 9)
+        # self.drawPoint(15, 9)
+        # self.drawPoint(3, 15)
+        # self.drawPoint(9, 15)
+        # self.drawPoint(15, 15)
 
     def drawLastMove(self, x, y):
         """ red square on last played stone """
