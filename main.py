@@ -47,11 +47,12 @@ class PyGoban(tk.Tk):
         self.drawPoints()
         self.displayCoordinates()
         self.can.bind("<Button-1>", self.mouseClick)
+        self.can.bind("<Button-3>", self.displayStoneData)
         self.can.bind("<Motion>", self.mouseMove)
 
     def initWidgets(self):
         self.can = tk.Canvas(self, width=480, height=480, bg="#dcb35c")
-        self.can.configure(cursor="none")
+        # self.can.configure(cursor="none")
         self.can.grid(row=0, column=0)
 
         self.screens_frame = tk.Frame(self, bg="blue")
@@ -164,15 +165,26 @@ class PyGoban(tk.Tk):
         for x in self.goban:
             print(*x, sep=" ")
 
-    def displayStoneData(self, stone):
+    def displayStoneData(self, evt):
         " liberties and groups debug "
-        self.stone_data_str.set(
-            "\n{} {} ({})".format(
-                stone.color,
-                self.humanCoords(stone.x, stone.y),
-                self.countLiberties(stone)
+        goban_x = (evt.x - self.offset) // self.stone_size
+        goban_y = (evt.y - self.offset) // self.stone_size
+        if self.goban[goban_x][goban_y] == 0:
+            return None
+        else:
+            stone = self.goban[goban_x][goban_y]
+            if stone.belongs_to_group:
+                group = " G"
+            else:
+                group = ""
+            self.stone_data_str.set(
+                "{} {} ({} {})".format(
+                    stone.color[0],
+                    self.humanCoords(stone.x, stone.y),
+                    self.countLiberties(stone),
+                    group
+                )
             )
-        )
 
     def humanCoords(self, x, y):
         """ goban[0][0] (top left corner) is 'a19' """
