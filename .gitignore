@@ -1,3 +1,4 @@
 tests/
 .ropeproject/
 *.png
+__pycache__
