@@ -5,14 +5,13 @@ import tkinter as tk
 
 
 class Stone:
-
     def __init__(self, x, y, color, tag):
         self.x = x
         self.y = y
         self.color = color
         self.tag = tag
         self.belongs_to_group = False
-        self.stone_group = None
+        self.stone_group = 0
         self.liberties = []
 
     def __repr__(self):
@@ -21,7 +20,6 @@ class Stone:
 
 
 class StoneGroup:
-
     def __init__(self, stones):
         self.stones = stones
 
@@ -33,7 +31,6 @@ class StoneGroup:
 
 
 class PyGoban(tk.Tk):
-
     def __init__(self, parent):
         tk.Tk.__init__(self, parent)
         self.parent = parent
@@ -42,7 +39,7 @@ class PyGoban(tk.Tk):
         self.title("PyGoban")
         self.goban = [[0 for i in range(19)] for i in range(19)]
         self.offset = 40  # goban grid offset from top-left canvas corner
-        self.stone_size = 20
+        self.stone_sz = 20
         self.game_turn = 0
         self.colors = ["black", "white"]
         self.white_stones = []
@@ -56,8 +53,9 @@ class PyGoban(tk.Tk):
         self.drawPoints()
         self.displayCoordinates()
         self.can.bind("<Button-1>", self.mouseClick)
-        self.can.bind("<Button-3>", self.displayStoneData)
+        self.can.bind("<Button-3>", self.displayStoneData)  # debug
         self.can.bind("<Motion>", self.mouseMove)
+        self.bind("<Control-q>", self.quit)
 
     def initWidgets(self):
         self.can = tk.Canvas(self, width=480, height=480, bg="#dcb35c")
@@ -89,23 +87,24 @@ class PyGoban(tk.Tk):
         self.debug_screen.grid(row=0, column=1)
 
     # DISPLAY -----------------------------------------------------------------
-
     def drawGoban(self):
         for x in range(18):
             for y in range(18):
                 self.can.create_rectangle(
-                    self.offset + y * self.stone_size,
-                    self.offset + x * self.stone_size,
-                    self.offset + y * self.stone_size + self.stone_size,
-                    self.offset + x * self.stone_size + self.stone_size
+                    self.offset + y * self.stone_sz,
+                    self.offset + x * self.stone_sz,
+                    self.offset + y * self.stone_sz + self.stone_sz,
+                    self.offset + x * self.stone_sz + self.stone_sz
                 )
 
     def drawStone(self, stone):
         self.can.create_oval(
-            self.offset + stone.y * self.stone_size - self.stone_size / 2,
-            self.offset + stone.x * self.stone_size - self.stone_size / 2,
-            self.offset + stone.y * self.stone_size - self.stone_size / 2 + self.stone_size,
-            self.offset + stone.x * self.stone_size - self.stone_size / 2 + self.stone_size,
+            self.offset + stone.y * self.stone_sz - self.stone_sz / 2,
+            self.offset + stone.x * self.stone_sz - self.stone_sz / 2,
+            self.offset + stone.y * self.stone_sz - self.stone_sz / 2 +
+            self.stone_sz,
+            self.offset + stone.x * self.stone_sz - self.stone_sz / 2 +
+            self.stone_sz,
             fill=stone.color,
             tag=stone.tag
         )
@@ -122,31 +121,31 @@ class PyGoban(tk.Tk):
         for i in range(1, 20):
             self.can.create_text(
               self.offset/2,
-              self.offset/2 + i * self.stone_size,
+              self.offset/2 + i * self.stone_sz,
               text=numbers[i-1]
             )
             self.can.create_text(
-              self.offset + self.stone_size * 19,
-              self.offset/2 + i * self.stone_size,
+              self.offset + self.stone_sz * 19,
+              self.offset/2 + i * self.stone_sz,
               text=numbers[i-1]
             )
             self.can.create_text(
-              self.offset/2 + i * self.stone_size,
+              self.offset/2 + i * self.stone_sz,
               self.offset/2,
               text=letters[i-1]
             )
             self.can.create_text(
-                self.offset/2 + i * self.stone_size,
-                self.offset + self.stone_size * 19,
+                self.offset/2 + i * self.stone_sz,
+                self.offset + self.stone_sz * 19,
                 text=letters[i-1]
             )
 
     def drawPoint(self, x, y):
         self.can.create_oval(
-            self.offset + x * self.stone_size - 2,
-            self.offset + y * self.stone_size - 2,
-            self.offset + x * self.stone_size + 2,
-            self.offset + y * self.stone_size + 2,
+            self.offset + x * self.stone_sz - 2,
+            self.offset + y * self.stone_sz - 2,
+            self.offset + x * self.stone_sz + 2,
+            self.offset + y * self.stone_sz + 2,
             fill="black"
         )
 
@@ -157,19 +156,34 @@ class PyGoban(tk.Tk):
                   (3, 15), (9, 15), (15, 15)]:
             self.drawPoint(x[0], x[1])
 
+    def drawTriangle(self, x, y):
+        """
+        drawTriangle(int x, int y)
+        -> tk.Canvas.Polygon(
+            x1, y1,
+            x2, y2,
+            x3, y3
+        )
+        """
+        self.can.create_polygon(
+            self.offset + x * self.stone_sz + 5, y * self.stone_sz - 5,
+            self.offset + x * self.stone_sz - 5, y * self.stone_sz,
+            self.offset + x * self.stone_sz + 5, y * self.stone_sz + 5
+
+        )
+
     def drawLastMove(self, x, y):
         """ red square mark on last played stone """
         self.can.delete("last")
         self.can.create_rectangle(
-            self.offset + y * self.stone_size - 4,
-            self.offset + x * self.stone_size - 4,
-            self.offset + y * self.stone_size + 4,
-            self.offset + x * self.stone_size + 4,
+            self.offset + y * self.stone_sz - 4,
+            self.offset + x * self.stone_sz - 4,
+            self.offset + y * self.stone_sz + 4,
+            self.offset + x * self.stone_sz + 4,
             outline="red", fill="red", tag="last"
         )
 
     # DATA AND DEBUG ----------------------------------------------------------
-
     def consoleDisplay(self):
         print("move {}\n".format(self.game_turn + 1))
         for x in self.goban:
@@ -177,8 +191,8 @@ class PyGoban(tk.Tk):
 
     def displayStoneData(self, evt):
         " liberties and groups debug with right-click"
-        goban_x = (evt.x - self.offset) // self.stone_size
-        goban_y = (evt.y - self.offset) // self.stone_size
+        goban_x = (evt.x - self.offset) // self.stone_sz
+        goban_y = (evt.y - self.offset) // self.stone_sz
         if self.goban[goban_x][goban_y] == 0:
             self.stone_data_str.set(
                 "empty {} [{}][{}]".format(
@@ -206,9 +220,18 @@ class PyGoban(tk.Tk):
 
     def humanCoords(self, x, y):
         """ goban[0][0] (top left corner) is 'a19' """
-        return "abcdefghjklmnopqrst"[x] + str(19 - y)
+        return "abcdefghjklmnopqrst"[y] + str(19 - x)
 
     # GAME LOGIC --------------------------------------------------------------
+    def getNeighbors(self, stone):
+        neighbors = []
+        neighbors_cords = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+        for n in neighbors_cords:
+            try:
+                neighbors.append((stone.x + n[0], stone.y + n[1]))
+            except IndexError:
+                pass
+        return neighbors
 
     def countLiberties(self, stone):
         liberties = 0
@@ -231,6 +254,7 @@ class PyGoban(tk.Tk):
             liberties += self.countLiberties(stone)
         return liberties
 
+    # TODO : refact ----->
     def updateBlackStones(self):
         """ check each stone liberties after click """
         for s in self.black_stones:
@@ -238,7 +262,7 @@ class PyGoban(tk.Tk):
                 if self.countLiberties(s) <= 0:
                     x, y = s.x, s.y
                     self.can.delete(s.tag)
-                    self.goban[x][y] == 0
+                    self.goban[x][y] = 0
                     self.black_stones.remove(s)
                     self.can.update()
                     print("stone removed at {} ({}, {})".format(
@@ -252,10 +276,10 @@ class PyGoban(tk.Tk):
         """ check each stone liberties after click """
         for s in self.white_stones:
             if s.belongs_to_group is False:
-                if self.countLiberties(s) == 0:
+                if self.countLiberties(s) <= 0:
                     x, y = s.x, s.y
                     self.can.delete(s.tag)
-                    self.goban[x][y] == 0
+                    self.goban[x][y] = 0
                     self.white_stones.remove(s)
                     self.can.update()
                     print("stone removed at {} ({}, {})".format(
@@ -266,27 +290,43 @@ class PyGoban(tk.Tk):
                     self.white_prisoners.set(self.white_prisoners.get() + 1)
 
     # EVENTS ------------------------------------------------------------------
-
     def mouseMove(self, evt):
         """ display preview stone on the goban """
         self.can.delete("preview")
-        goban_x = (evt.y - self.offset) // self.stone_size
-        goban_y = (evt.x - self.offset) // self.stone_size
+        goban_x = (evt.y - self.offset) // self.stone_sz
+        goban_y = (evt.x - self.offset) // self.stone_sz
         color = self.colors[self.game_turn % 2]
         if goban_x in range(19) and goban_y in range(19):
-            self.goban_coords.set(self.humanCoords(goban_x, goban_y))
+            self.goban_coords.set("[{}][{}] - {}".format(
+                    goban_x,
+                    goban_y,
+                    self.humanCoords(goban_x, goban_y)
+                )
+            )
             if self.goban[goban_x][goban_y] == 0:
                 self.can.create_rectangle(
-                    self.offset + goban_y * self.stone_size - 5,
-                    self.offset + goban_x * self.stone_size - 5,
-                    self.offset + goban_y * self.stone_size + 5,
-                    self.offset + goban_x * self.stone_size + 5,
+                    self.offset + goban_y * self.stone_sz - 5,
+                    self.offset + goban_x * self.stone_sz - 5,
+                    self.offset + goban_y * self.stone_sz + 5,
+                    self.offset + goban_x * self.stone_sz + 5,
                     fill=color, tag="preview"
                 )
 
     def mouseClick(self, evt):
-        goban_x = (evt.y - self.offset) // self.stone_size
-        goban_y = (evt.x - self.offset) // self.stone_size
+        goban_x = (evt.y - self.offset) // self.stone_sz
+        goban_y = (evt.x - self.offset) // self.stone_sz
+        """
+        get 4 neighbours of point played
+        # -> [0, 'b', 'w', '0']
+        if neighbours.count(0) <= 0: # no liberties
+          if ['b', 'w'][self.game_turn % 2] in neighbours
+            yes : does this stone belongs to a group ?
+              yes : if stone_group.liberties == 1:
+                return 0 # illegal move
+        else: # at least  liberty
+            pass
+
+        """
         self.can.update()
         color = self.colors[self.game_turn % 2]
         if goban_x in range(19) and goban_y in range(19):
@@ -294,6 +334,11 @@ class PyGoban(tk.Tk):
                 # TODO here check for illegal move (suicide)
                 tag = self.humanCoords(goban_x, goban_y)
                 new_stone = Stone(goban_x, goban_y, color, tag)
+                # draw triangles on new_stone liberties
+                new_st_neighbrs = self.getNeighbors(new_stone)
+                for n in new_st_neighbrs:
+                    if self.goban[n[0]][n[1]] == 0:
+                        self.drawTriangle(n[0], n[1])
                 self.goban[goban_x][goban_y] = new_stone
                 if color == "black":
                     self.black_stones.append(new_stone)
