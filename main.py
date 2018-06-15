@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import tkinter as tk
+import tkinter.filedialog as tkf
 from sgf_utils import SgfParser
 
 
@@ -91,10 +92,13 @@ class PyGoban(tk.Tk):
         self.menu_bar = tk.Menu(self)
         # file
         self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.file_menu.add_command(label="Open")
+        self.file_menu.add_command(label="Open", command=self.loadSgf)
         self.file_menu.add_command(label="Quit", command=self.quit)
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
         self.config(menu=self.menu_bar)
+
+    def loadSgf(self):
+        filename = tkf.askopenfilename(filetypes=[("SGF", "*.sgf")])
 
     # DISPLAY -----------------------------------------------------------------
     def drawGoban(self):
