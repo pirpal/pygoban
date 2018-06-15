@@ -233,16 +233,29 @@ class PyGoban(tk.Tk):
                 pass
         return neighbors
 
+    def getPointNeighbors(self, x, y):
+        neighbors = []
+        neighbors_cords = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+        for n in neighbors_cords:
+            try:
+                if x + n[0] in range(19) and y + n[1] in range(19):
+                    neighbors.append((x + n[0], y + n[1]))
+            except IndexError:
+                pass
+        return neighbors
+
     def countLiberties(self, stone):
         liberties = 0
         neighbours = [(0, -1), (1, 0), (0, 1), (-1, 0)]
         for n in neighbours:
             try:
-                if self.goban[stone.x + n[0]][stone.y + n[1]] == 0:
-                    liberties += 1
-                # check if the stone is connected in a group :
-                elif self.goban[stone.x + n[0]][stone.y + n[1]].color == stone.color:
-                    stone.belongs_to_group = True
+                # ignore offboard :
+                if stone.x + n[0] in range(19) and stone.y + n[1] in range(19):
+                    if self.goban[stone.x + n[0]][stone.y + n[1]] == 0:
+                        liberties += 1
+                    # check if the stone is connected in a group :
+                    elif self.goban[stone.x + n[0]][stone.y + n[1]].color == stone.color:
+                        stone.belongs_to_group = True
             except IndexError:
                 pass
         return liberties
@@ -290,6 +303,39 @@ class PyGoban(tk.Tk):
                     self.white_prisoners.set(self.white_prisoners.get() + 1)
 
     # EVENTS ------------------------------------------------------------------
+    """
+    Coordinates systems:
+
+    _______
+    Tkinter (mouse events)
+    top left = (0, 0)
+
+    x0______x+
+    y0
+    |
+    |
+    y+______
+
+    __________________________________
+    Goban lettering (aka human_coords)
+    top left = (A, 19)
+
+    a_______z
+    19
+    |
+    |
+    1_______
+
+    _______________________________________
+    Program 2d array's goban representation
+    top left = (0, 0)
+
+    y0______y18
+    x0
+    |
+    |
+    x18______
+    """
     def mouseMove(self, evt):
         """ display preview stone on the goban """
         self.can.delete("preview")
@@ -332,13 +378,27 @@ class PyGoban(tk.Tk):
         if goban_x in range(19) and goban_y in range(19):
             if self.goban[goban_x][goban_y] == 0:
                 # TODO here check for illegal move (suicide)
+                # get clicked intersection liberties :
+                point_neighbors = self.getPointNeighbors(goban_x, goban_y)
+                print(point_neighbors)
+                # A) there is no friend stone and no free point around, :
+                #   a1) this move kills an opponent's group or stone:
+                #     a1.1) is this move a repetition of ko ?
+                #           yes: illegal move
+                #           no: legal move
+                #   a2) if the move does not kill : -> move illegal
+                # B) there is no liberties and ONE friend stone to connect :
+                #  b1) is clicked point the stone only liberty ?
+                #      yes: illegal move (suicide)
+                #      no: legal move
+                # C) else: legal move
+                # new_st_neighbrs = self.getNeighbors(new_stone)
+                # only if move legal :
                 tag = self.humanCoords(goban_x, goban_y)
                 new_stone = Stone(goban_x, goban_y, color, tag)
-                # draw triangles on new_stone liberties
-                new_st_neighbrs = self.getNeighbors(new_stone)
-                for n in new_st_neighbrs:
-                    if self.goban[n[0]][n[1]] == 0:
-                        self.drawTriangle(n[0], n[1])
+                for point in point_neighbors:
+                    if self.goban[point[0]][point[1]] == 0:
+                        new_stone.liberties.append(point)
                 self.goban[goban_x][goban_y] = new_stone
                 if color == "black":
                     self.black_stones.append(new_stone)
