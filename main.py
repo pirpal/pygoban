@@ -156,22 +156,6 @@ class PyGoban(tk.Tk):
                   (3, 15), (9, 15), (15, 15)]:
             self.drawPoint(x[0], x[1])
 
-    def drawTriangle(self, x, y):
-        """
-        drawTriangle(int x, int y)
-        -> tk.Canvas.Polygon(
-            x1, y1,
-            x2, y2,
-            x3, y3
-        )
-        """
-        self.can.create_polygon(
-            self.offset + x * self.stone_sz + 5, y * self.stone_sz - 5,
-            self.offset + x * self.stone_sz - 5, y * self.stone_sz,
-            self.offset + x * self.stone_sz + 5, y * self.stone_sz + 5
-
-        )
-
     def drawLastMove(self, x, y):
         """ red square mark on last played stone """
         self.can.delete("last")
@@ -249,7 +233,6 @@ class PyGoban(tk.Tk):
         neighbours = [(0, -1), (1, 0), (0, 1), (-1, 0)]
         for n in neighbours:
             try:
-                # ignore offboard :
                 if stone.x + n[0] in range(19) and stone.y + n[1] in range(19):
                     if self.goban[stone.x + n[0]][stone.y + n[1]] == 0:
                         liberties += 1
@@ -361,26 +344,13 @@ class PyGoban(tk.Tk):
     def mouseClick(self, evt):
         goban_x = (evt.y - self.offset) // self.stone_sz
         goban_y = (evt.x - self.offset) // self.stone_sz
-        """
-        get 4 neighbours of point played
-        # -> [0, 'b', 'w', '0']
-        if neighbours.count(0) <= 0: # no liberties
-          if ['b', 'w'][self.game_turn % 2] in neighbours
-            yes : does this stone belongs to a group ?
-              yes : if stone_group.liberties == 1:
-                return 0 # illegal move
-        else: # at least  liberty
-            pass
-
-        """
         self.can.update()
         color = self.colors[self.game_turn % 2]
         if goban_x in range(19) and goban_y in range(19):
             if self.goban[goban_x][goban_y] == 0:
-                # TODO here check for illegal move (suicide)
                 # get clicked intersection liberties :
                 point_neighbors = self.getPointNeighbors(goban_x, goban_y)
-                print(point_neighbors)
+                # print(point_neighbors)
                 # A) there is no friend stone and no free point around, :
                 #   a1) this move kills an opponent's group or stone:
                 #     a1.1) is this move a repetition of ko ?
@@ -392,8 +362,7 @@ class PyGoban(tk.Tk):
                 #      yes: illegal move (suicide)
                 #      no: legal move
                 # C) else: legal move
-                # new_st_neighbrs = self.getNeighbors(new_stone)
-                # only if move legal :
+                # only if move is legal :
                 tag = self.humanCoords(goban_x, goban_y)
                 new_stone = Stone(goban_x, goban_y, color, tag)
                 for point in point_neighbors:
