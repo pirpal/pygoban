@@ -49,20 +49,20 @@ class PyGoban(tk.Tk):
         self.goban_coords = tk.StringVar()
         self.stone_data_str = tk.StringVar()  # debug
         self.initWidgets()
+        self.initMenu()
         self.drawGoban()
         self.drawPoints()
         self.displayCoordinates()
         self.can.bind("<Button-1>", self.mouseClick)
         self.can.bind("<Button-3>", self.displayStoneData)  # debug
         self.can.bind("<Motion>", self.mouseMove)
-        self.bind("<Control-q>", self.quit)
 
     def initWidgets(self):
         self.can = tk.Canvas(self, width=480, height=480, bg="#dcb35c")
         # self.can.configure(cursor="none")
         self.can.grid(row=0, column=0)
 
-        self.screens_frame = tk.Frame(self, bg="blue")
+        self.screens_frame = tk.Frame(self, bg="#dcb35c")
         self.screens_frame.grid(row=1, column=0)
         self.coords_screen = tk.Label(
             self.screens_frame,
@@ -70,8 +70,8 @@ class PyGoban(tk.Tk):
             textvariable=self.goban_coords,
             width=8,  # characters
             height=3,  # lines
-            bg="#272822",
-            fg="white"
+            bg="#dcb35c",
+            fg="black"
         )
         self.coords_screen.grid(row=0, column=0)
 
@@ -85,6 +85,15 @@ class PyGoban(tk.Tk):
             fg="white"
         )
         self.debug_screen.grid(row=0, column=1)
+
+    def initMenu(self):
+        self.menu_bar = tk.Menu(self)
+        # file
+        self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.file_menu.add_command(label="Open")
+        self.file_menu.add_command(label="Quit", command=self.quit)
+        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
+        self.config(menu=self.menu_bar)
 
     # DISPLAY -----------------------------------------------------------------
     def drawGoban(self):
@@ -326,12 +335,7 @@ class PyGoban(tk.Tk):
         goban_y = (evt.x - self.offset) // self.stone_sz
         color = self.colors[self.game_turn % 2]
         if goban_x in range(19) and goban_y in range(19):
-            self.goban_coords.set("[{}][{}] - {}".format(
-                    goban_x,
-                    goban_y,
-                    self.humanCoords(goban_x, goban_y)
-                )
-            )
+            self.goban_coords.set(self.humanCoords(goban_x, goban_y))
             if self.goban[goban_x][goban_y] == 0:
                 self.can.create_rectangle(
                     self.offset + goban_y * self.stone_sz - 5,
